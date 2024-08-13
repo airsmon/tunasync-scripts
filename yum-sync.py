@@ -200,6 +200,9 @@ def main():
 keepcache=0
 ''')
         for name, url in combination_os_comp(arch):
+            dst_name = name
+            if '/' in name:
+                name = name.replace('/', '-').strip('-')
             conf.write(f'''
 [{name}]
 name={name}
@@ -208,7 +211,7 @@ repo_gpgcheck=0
 gpgcheck=0
 enabled=1
 ''')
-            dst = (args.working_dir / name).absolute()
+            dst = (args.working_dir / dst_name).absolute()
             dst.mkdir(parents=True, exist_ok=True)
             dest_dirs.append(dst)
         conf.flush()
@@ -223,7 +226,11 @@ enabled=1
         cmd_args = [
             "dnf", "reposync",
             "-c", conf.name,
-            "--delete", "-p", str(args.working_dir.absolute())]
+            "--repo", name,
+            "--norepopath",
+            # "--delete", "-p", str(args.working_dir.absolute())]
+            "--delete",
+            "-p", dst]
         if args.pass_arch_to_reposync:
             cmd_args += ["--arch", arch]
         print(f"Launching dnf reposync with command: {cmd_args}", flush=True)
